@@ -1,0 +1,28 @@
+trigger:
+  - master
+
+stages:
+  - stage: CI
+
+    jobs:
+      - job: CI
+        displayName: CI
+        pool:
+          vmImage: 'Ubuntu-16.04'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: '0.12.13'
+            displayName: Terraform Install
+          - task: TerraformTaskV1@0
+            displayName: Terraform init
+            inputs:
+              provider: 'aws'
+              backendServiceAWS: 'default'
+              backendAWSBucketName: 'simple-pipeline.tfstate'
+              backendAWSKey: 'simple-vpc'
+              command: 'init'
+          - task: TerraformTaskV1@0
+            displayName: Terraform validate
+            inputs:
+              command: 'validate'
