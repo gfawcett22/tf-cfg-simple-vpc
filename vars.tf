@@ -24,7 +24,7 @@ variable "cidr" {
 
 variable "az_count" {
   type        = number
-  default     = 1
+  default     = 2
   description = "The number of availability zones to use. The region must have at least this many AZs available. Up to 4 AZs may be used."
 }
 
@@ -60,7 +60,7 @@ variable "private_subnet_tags" {
 
 variable "public_subnet_tags" {
   type        = map(string)
-  default     = {"kubernetes.io/role/elb" = "1"}
+  default     = { "kubernetes.io/role/elb" = "1" }
   description = "Additional tags for public subnets"
 }
 

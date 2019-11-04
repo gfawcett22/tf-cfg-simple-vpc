@@ -154,14 +154,12 @@ EOF
 module "eks" {
   source = "github.com/terraform-aws-modules/terraform-aws-eks?ref=v6.0.2"
 
-  config_output_path = "./.terraform/locals/"
-
   cluster_name    = var.cluster_name
   cluster_version = "1.14"
 
   vpc_id = module.vpc.vpc_id
 
-  subnets = module.vpc.private_subnet_arns
+  subnets = concat(module.vpc.private_subnets, module.vpc.public_subnets)
 
   worker_groups = [
     {
@@ -179,6 +177,8 @@ module "eks" {
       asg_desired_capacity = 0
     },
   ]
+
+  manage_aws_auth = true
 
   workers_additional_policies = [aws_iam_policy.alb.arn]
 

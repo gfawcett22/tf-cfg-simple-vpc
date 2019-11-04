@@ -38,7 +38,6 @@ stages:
               targetPath: '$(Build.ArtifactStagingDirectory)'
               artifact: 'artifacts'
             displayName: Publish Pipeline Artifacts in $(Build.ArtifactStagingDirectory)
-            #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
   - stage: Deploy
     dependsOn: CI
@@ -57,6 +56,12 @@ stages:
                   terraformVersion: '0.12.13'
                 displayName: Terraform Install
 
+              - script: |
+                  curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
+                  chmod +x aws-iam-authenticator
+                  sudo mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator
+                displayName: Install aws-iam-authenticator
+              
               - task: TerraformTaskV1@0
                 displayName: Terraform init
                 inputs:
@@ -66,6 +71,7 @@ stages:
                   backendAWSBucketName: 'simple-pipeline.tfstate'
                   backendAWSKey: 'simple-vpc'
                   command: 'init'
+
 
               - task: TerraformTaskV1@0
                 displayName: Terraform plan
