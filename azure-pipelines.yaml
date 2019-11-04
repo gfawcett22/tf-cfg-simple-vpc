@@ -3,7 +3,6 @@ trigger:
 
 stages:
   - stage: CI
-
     jobs:
       - job: CI
         displayName: CI
@@ -26,3 +25,61 @@ stages:
             displayName: Terraform validate
             inputs:
               command: 'validate'
+
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)'
+              Contents: '*.tf'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+            displayName: Copy Terraform directory to $(Build.ArtifactStagingDirectory)
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)'
+              artifact: 'artifacts'
+            displayName: Publish Pipeline Artifacts in $(Build.ArtifactStagingDirectory)
+            #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  - stage: Deploy
+    dependsOn: CI
+#    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+    - deployment: Deploy
+      pool:
+        vmImage: 'Ubuntu-16.04'
+      environment: 'nonprod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - task: TerraformInstaller@0
+                inputs:
+                  terraformVersion: '0.12.13'
+                displayName: Terraform Install
+
+              - task: TerraformTaskV1@0
+                displayName: Terraform init
+                inputs:
+                  provider: 'aws'
+                  workingDirectory: $(Agent.BuildDirectory)/artifacts
+                  backendServiceAWS: 'default'
+                  backendAWSBucketName: 'simple-pipeline.tfstate'
+                  backendAWSKey: 'simple-vpc'
+                  command: 'init'
+
+              - task: TerraformTaskV1@0
+                displayName: Terraform plan
+                inputs:
+                  provider: 'aws'
+                  workingDirectory: $(Agent.BuildDirectory)/artifacts
+                  environmentServiceNameAWS: 'default'
+                  command: 'plan'
+
+              - task: TerraformTaskV1@0
+                displayName: Terraform apply
+                inputs:
+                  provider: 'aws'
+                  command: 'apply'
+                  workingDirectory: $(Agent.BuildDirectory)/artifacts
+                  commandOptions: '-auto-approve'
+                  environmentServiceNameAWS: 'default'
