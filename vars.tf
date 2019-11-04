@@ -60,7 +60,7 @@ variable "private_subnet_tags" {
 
 variable "public_subnet_tags" {
   type        = map(string)
-  default     = {}
+  default     = {"kubernetes.io/role/elb" = "1"}
   description = "Additional tags for public subnets"
 }
 
